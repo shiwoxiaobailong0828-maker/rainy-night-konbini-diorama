@@ -1,11 +1,13 @@
 // 程序化音效系统（Web Audio API）：积木搭建声、便利店门铃、雨声风声、雷鸣
 let ctx = null;
 let master = null;
+let streamDest = null;
 let rainGain = null;
 let rainFilter = null;
 let windGain = null;
 let muted = false;
 let lastTickAt = 0;
+let bgmNodes = [];
 
 function ensureCtx() {
   if (ctx) {
@@ -18,8 +20,87 @@ function ensureCtx() {
   master = ctx.createGain();
   master.gain.value = 0.75;
   master.connect(ctx.destination);
+  if (ctx.createMediaStreamDestination) {
+    streamDest = ctx.createMediaStreamDestination();
+    master.connect(streamDest);
+  }
   setupRainLoop();
   return ctx;
+}
+
+/** 获取 WebAudio 混音输出流（用于录制含完整音效的宣传片视频） */
+export function getAudioStream() {
+  ensureCtx();
+  return streamDest ? streamDest.stream : null;
+}
+
+/** 播放宣传片专属 Lo-Fi 雨夜电钢琴和弦背景音乐（纯 WebAudio 合成） */
+export function playPromoBgm(duration = 25) {
+  const c = ensureCtx();
+  if (!c) return;
+  // 清理旧的 BGM 节点
+  for (const n of bgmNodes) {
+    try { n.stop(); } catch {}
+  }
+  bgmNodes = [];
+
+  const t0 = c.currentTime + 0.05;
+  // 温暖治愈的日式雨夜爵士七和弦进行：Fmaj9 -> Em7 -> Dm9 -> Cmaj9
+  const prog = [
+    [174.61, 261.63, 329.63, 392.00, 440.00], // Fmaj9
+    [164.81, 246.94, 293.66, 392.00, 493.88], // Em7
+    [146.83, 220.00, 261.63, 329.63, 440.00], // Dm9
+    [130.81, 196.00, 246.94, 293.66, 329.63], // Cmaj9
+  ];
+  const chordDur = 3.125; // 每个和弦约 3.125s，8 个小节刚好 25s
+  const totalChords = Math.ceil(duration / chordDur);
+
+  for (let bar = 0; bar < totalChords; bar++) {
+    const chord = prog[bar % prog.length];
+    const start = t0 + bar * chordDur;
+    chord.forEach((freq, idx) => {
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      const lp = c.createBiquadFilter();
+      osc.type = idx === 0 ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(freq, start + idx * 0.045);
+
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(900, start);
+      lp.frequency.exponentialRampToValueAtTime(380, start + chordDur * 0.95);
+
+      const peak = idx === 0 ? 0.042 : 0.024;
+      g.gain.setValueAtTime(0.0001, start + idx * 0.045);
+      g.gain.linearRampToValueAtTime(peak, start + idx * 0.045 + 0.08);
+      g.gain.exponentialRampToValueAtTime(0.001, start + chordDur * 0.98);
+
+      osc.connect(lp);
+      lp.connect(g);
+      g.connect(master);
+      osc.start(start + idx * 0.045);
+      osc.stop(start + chordDur);
+      bgmNodes.push(osc);
+    });
+
+    // 轻柔的高音星光点缀音（Rhodes 泛音感）
+    const bellNotes = [chord[4] * 2, chord[3] * 2, chord[2] * 2];
+    bellNotes.forEach((bf, bi) => {
+      const bt = start + 0.85 + bi * 0.72;
+      if (bt - t0 >= duration - 0.5) return;
+      const bOsc = c.createOscillator();
+      const bGain = c.createGain();
+      bOsc.type = 'sine';
+      bOsc.frequency.setValueAtTime(bf, bt);
+      bGain.gain.setValueAtTime(0.0001, bt);
+      bGain.gain.linearRampToValueAtTime(0.012, bt + 0.02);
+      bGain.gain.exponentialRampToValueAtTime(0.0001, bt + 0.9);
+      bOsc.connect(bGain);
+      bGain.connect(master);
+      bOsc.start(bt);
+      bOsc.stop(bt + 0.95);
+      bgmNodes.push(bOsc);
+    });
+  }
 }
 
 function setupRainLoop() {

@@ -1,6 +1,7 @@
 # 雨夜便利店街角 · 三渲二微缩三维场景 (Rainy Night Konbini Diorama)
 
-👉 **在线直接体验（无需安装，点击即玩）：[https://shiwoxiaobailong0828-maker.github.io/rainy-night-konbini-diorama/](https://shiwoxiaobailong0828-maker.github.io/rainy-night-konbini-diorama/)**
+👉 **在线直接体验（无需安装，点击即玩）：[https://shiwoxiaobailong.me/rainy-night-konbini-diorama/](https://shiwoxiaobailong.me/rainy-night-konbini-diorama/)**
+🎬 **在线观看 / 下载 1080p 实机宣传片（含音效与字幕）：[雨夜便利店微缩场景-宣传演示片.mp4](https://raw.githubusercontent.com/shiwoxiaobailong0828-maker/rainy-night-konbini-diorama/main/promo/%E9%9B%A8%E5%A4%9C%E4%BE%BF%E5%88%A9%E5%BA%97%E5%BE%AE%E7%BC%A9%E5%9C%BA%E6%99%AF-%E5%AE%A3%E4%BC%A0%E6%BC%94%E7%A4%BA%E7%89%87.mp4)**
 
 一个基于 **Three.js** 构建的日式二次元动画风格（三渲二 / Cel-Shading）微缩三维街角景观模型。
 全场景搭建在 `16m × 16m` 的可收藏展示底座上，无任何 UI 界面遮挡，支持自由拖拽、旋转、缩放观察，内置**从下往上零穿模逐层拼装入场动画**、**纯 Web Audio API 程序化环境音效**以及**多模式动态天气系统**。
@@ -60,6 +61,7 @@
 | **鼠标滚轮** | 缩放镜头（拉近可透过玻璃看清店内商品，拉高可触发屋顶半透明剖切） |
 | **首次点击 / 按键** | 自动激活 Web Audio API 环境雨声与音效 |
 | **`R` 键 / 双击画面** | 重新播放从下往上的完整组装入场动画（含搭建音效与通电门铃） |
+| **`P` 键** | **一键播放 25 秒电影级自动宣传片运镜（含 Lo-Fi 雨夜电钢琴配乐、全亮点巡礼与天气自动演进）** |
 | **`W` 键** | 循环切换天气模式（中雨 → 雷暴 → 晴朗星夜 → 微雨） |
 | **`1` / `2` / `3` / `4` 键** | 直接切换至：`1` 微雨 / `2` 中雨 / `3` 雷暴 / `4` 晴朗星夜 |
 | **`L` 键** | 立即手动触发一道 3D 闪电与雷鸣音效 |

@@ -9,7 +9,7 @@ import { buildApartments } from './buildings.js';
 import { buildStreet, lampSpots } from './street.js';
 import { buildRain, buildDecals, buildCones, updateFx, setWeatherMode, nextWeatherMode, triggerLightning } from './fx.js';
 import { createPost } from './post.js';
-import { initAudio, toggleMute, playKonbiniChime } from './audio.js';
+import { initAudio, toggleMute, playKonbiniChime, playPromoBgm, getAudioStream } from './audio.js';
 
 // ---------- 渲染器 / 场景 ----------
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
@@ -79,8 +79,18 @@ controls.maxPolarAngle = Math.PI / 2 - 0.03;
 controls.screenSpacePanning = true;
 controls.rotateSpeed = 0.7;
 let introCam = true;
-controls.addEventListener('start', () => { introCam = false; });
-renderer.domElement.addEventListener('wheel', () => { introCam = false; }, { passive: true });
+let promoActive = false;
+let promoEvents = {};
+const defaultTarget = new THREE.Vector3(0, 1.4, 0.2);
+
+controls.addEventListener('start', () => {
+  introCam = false;
+  promoActive = false;
+});
+renderer.domElement.addEventListener('wheel', () => {
+  introCam = false;
+  promoActive = false;
+}, { passive: true });
 
 // 稳重优雅的入场运镜：先以略高俯角清晰观察从地面往上搭建与店内陈设组装，再平滑落位到最佳街角观赏视角
 const START = { az: 0.16, el: 0.68, r: 32 };
@@ -119,18 +129,51 @@ let T0 = 0;
 let doorChimeCycle = -1;
 window.__ready = false;
 
+// 电影级自动宣传片运镜关键帧（25 秒一镜到底全亮点展示）
+const PROMO_KEYS = [
+  { t: 0.0,  az: 0.14,  el: 0.68, r: 30.5, tx: 0.0,  ty: 1.40, tz: 0.20 }, // 俯角看底座与店内陈设生长
+  { t: 4.5,  az: 0.38,  el: 0.56, r: 28.0, tx: 0.0,  ty: 1.50, tz: 0.00 }, // 1F->2F->3F 逐层向上搭建
+  { t: 9.2,  az: 0.62,  el: 0.48, r: 26.5, tx: 0.0,  ty: 1.40, tz: 0.20 }, // 全场景霓虹通电点亮 + 飘雨
+  { t: 11.4, az: 0.16,  el: 0.18, r: 12.0, tx: 0.15, ty: 1.42, tz: -1.55 }, // 推镜至落地橱窗前看店内暖光
+  { t: 14.2, az: -0.15, el: 0.17, r: 11.4, tx: -0.45,ty: 1.42, tz: -1.60 }, // 横移掠过拉面吧台、关东煮与收银台
+  { t: 16.5, az: 0.32,  el: 1.25, r: 22.0, tx: -0.20,ty: 1.40, tz: -1.60 }, // 拉高俯视触发屋顶半透明剖切（娃娃屋视角）
+  { t: 18.8, az: -0.66, el: 0.32, r: 19.5, tx: -2.50,ty: 1.60, tz: -2.20 }, // 俯冲掠过西侧居酒屋后巷与红灯笼
+  { t: 21.4, az: 0.78,  el: 0.35, r: 23.0, tx: 0.60, ty: 1.35, tz: 0.20 }, // 环绕至东侧街角贩卖机与雷暴闪电
+  { t: 25.0, az: 0.58,  el: 0.46, r: 26.8, tx: 0.0,  ty: 1.40, tz: 0.20 }, // 晴朗星夜下微缩收藏盒全景定格
+];
+
 function replayIntro() {
   if (hold) return;
+  promoActive = false;
+  target.copy(defaultTarget);
+  controls.target.copy(defaultTarget);
   resetIntro();
   T0 = 0;
   doorChimeCycle = -1;
   introCam = true;
 }
 
+function startPromoTour() {
+  if (hold) return;
+  setWeatherMode(1, true); // 以经典雨夜开场
+  resetIntro();
+  T0 = 0;
+  doorChimeCycle = -1;
+  introCam = false;
+  promoActive = true;
+  promoEvents = { chime1: false, storm: false, bolt: false, clear: false };
+  playPromoBgm(25.0);
+}
+
+window.__startPromoTour = startPromoTour;
+window.__getAudioStream = getAudioStream;
+window.__getPromoState = () => ({ active: promoActive, t: T0 });
+
 renderer.domElement.addEventListener('dblclick', replayIntro);
 window.addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   if (k === 'r') replayIntro();
+  else if (k === 'p') startPromoTour();
   else if (k === '1') setWeatherMode(0, true);
   else if (k === '2') setWeatherMode(1, true);
   else if (k === '3') setWeatherMode(2, true);
@@ -176,8 +219,52 @@ function frame() {
     }
   }
 
-  // 入场运镜
-  if (introCam && !hold) {
+  // 入场运镜或电影级自动宣传片运镜
+  if (promoActive && !hold) {
+    // 宣传片节点事件触发
+    if (tNow >= 10.6 && !promoEvents.chime1) {
+      promoEvents.chime1 = true;
+      playKonbiniChime();
+    }
+    if (tNow >= 18.6 && !promoEvents.storm) {
+      promoEvents.storm = true;
+      setWeatherMode(2, true); // 切换雷暴
+    }
+    if (tNow >= 19.6 && !promoEvents.bolt) {
+      promoEvents.bolt = true;
+      triggerLightning(1.25); // 劈下 3D 分叉闪电 + 雷鸣
+    }
+    if (tNow >= 21.8 && !promoEvents.clear) {
+      promoEvents.clear = true;
+      setWeatherMode(3, true); // 雨停切换至璀璨星夜
+    }
+    // 推镜至店门前时自动平滑敞开感应门
+    if (tNow > 10.5 && tNow < 14.5 && doors.left) {
+      const open = smooth(10.5, 11.2, tNow) * (1 - smooth(13.8, 14.4, tNow));
+      doors.left.position.x = doors.lx - 0.58 * open;
+      doors.right.position.x = doors.rx + 0.52 * open;
+    }
+
+    // 关键帧平滑插值
+    let seg = PROMO_KEYS.length - 2;
+    for (let i = 0; i < PROMO_KEYS.length - 1; i++) {
+      if (tNow < PROMO_KEYS[i + 1].t) { seg = i; break; }
+    }
+    const a = PROMO_KEYS[seg], b = PROMO_KEYS[seg + 1];
+    const u = ease(Math.min(1, Math.max(0, (tNow - a.t) / (b.t - a.t))));
+    target.set(
+      a.tx + (b.tx - a.tx) * u,
+      a.ty + (b.ty - a.ty) * u,
+      a.tz + (b.tz - a.tz) * u,
+    );
+    controls.target.copy(target);
+    setCam(
+      a.az + (b.az - a.az) * u,
+      a.el + (b.el - a.el) * u,
+      a.r + (b.r - a.r) * u,
+    );
+    if (tNow >= 25.5) promoActive = false;
+  } else if (introCam && !hold) {
     const k = ease(Math.min(1, tNow / (INTRO_END - 0.3)));
     setCam(START.az + (FINAL.az - START.az) * k, START.el + (FINAL.el - START.el) * k, START.r + (FINAL.r - START.r) * k);
     if (tNow > INTRO_END) introCam = false;
