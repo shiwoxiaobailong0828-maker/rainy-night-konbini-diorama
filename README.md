@@ -1,5 +1,7 @@
 # 雨夜便利店街角 · 三渲二微缩三维场景 (Rainy Night Konbini Diorama)
 
+👉 **在线直接体验（无需安装，点击即玩）：[https://shiwoxiaobailong0828-maker.github.io/rainy-night-konbini-diorama/](https://shiwoxiaobailong0828-maker.github.io/rainy-night-konbini-diorama/)**
+
 一个基于 **Three.js** 构建的日式二次元动画风格（三渲二 / Cel-Shading）微缩三维街角景观模型。
 全场景搭建在 `16m × 16m` 的可收藏展示底座上，无任何 UI 界面遮挡，支持自由拖拽、旋转、缩放观察，内置**从下往上零穿模逐层拼装入场动画**、**纯 Web Audio API 程序化环境音效**以及**多模式动态天气系统**。
 
@@ -9,15 +11,15 @@
 
 | 全景微缩街角视角 | 便利店暖光室内陈设特写 |
 | :---: | :---: |
-| ![全景预览](./preview/01-overview.png) | ![室内特写](./preview/02-store-interior.png) |
+| ![全景预览](https://raw.githubusercontent.com/shiwoxiaobailong0828-maker/rainy-night-konbini-diorama/main/preview/01-overview.png) | ![室内特写](https://raw.githubusercontent.com/shiwoxiaobailong0828-maker/rainy-night-konbini-diorama/main/preview/02-store-interior.png) |
 
 | 街角自动贩卖机与斑马线 | 居酒屋后巷与霓虹灯牌 |
 | :---: | :---: |
-| ![街角视角](./preview/03-street-corner.png) | ![后巷视角](./preview/04-izakaya-alley.png) |
+| ![街角视角](https://raw.githubusercontent.com/shiwoxiaobailong0828-maker/rainy-night-konbini-diorama/main/preview/03-street-corner.png) | ![后巷视角](https://raw.githubusercontent.com/shiwoxiaobailong0828-maker/rainy-night-konbini-diorama/main/preview/04-izakaya-alley.png) |
 
 | 俯视自动剖切屋顶（娃娃屋视角） | 从下往上逐层拼装动画过程 |
 | :---: | :---: |
-| ![俯视剖切](./preview/05-top-cutaway.png) | ![拼装过程](./preview/07-build-step-floors.png) |
+| ![俯视剖切](https://raw.githubusercontent.com/shiwoxiaobailong0828-maker/rainy-night-konbini-diorama/main/preview/05-top-cutaway.png) | ![拼装过程](https://raw.githubusercontent.com/shiwoxiaobailong0828-maker/rainy-night-konbini-diorama/main/preview/07-build-step-floors.png) |
 
 ---
 
@@ -57,7 +59,7 @@
 | **鼠标右键拖拽** | 平移视角焦点 |
 | **鼠标滚轮** | 缩放镜头（拉近可透过玻璃看清店内商品，拉高可触发屋顶半透明剖切） |
 | **首次点击 / 按键** | 自动激活 Web Audio API 环境雨声与音效 |
-| **`R` 键 / 双击画面** | 重新播放从下往上的完整组装入场动画（含搭建音效與通电门铃） |
+| **`R` 键 / 双击画面** | 重新播放从下往上的完整组装入场动画（含搭建音效与通电门铃） |
 | **`W` 键** | 循环切换天气模式（中雨 → 雷暴 → 晴朗星夜 → 微雨） |
 | **`1` / `2` / `3` / `4` 键** | 直接切换至：`1` 微雨 / `2` 中雨 / `3` 雷暴 / `4` 晴朗星夜 |
 | **`L` 键** | 立即手动触发一道 3D 闪电与雷鸣音效 |
@@ -76,25 +78,4 @@ npm run dev
 
 # 3. 打包生产版本
 npm run build
-```
-
----
-
-## 目录结构
-
-```text
-├── index.html          # 全屏无 UI 画布入口
-├── package.json        # 项目依赖与脚本配置
-├── preview/            # 多角度场景渲染预览图
-└── src/
-    ├── main.js         # 场景主入口、灯光、相机轨迹、交互控制与主循环
-    ├── utils.js        # 三渲二 Toon 材质、程序化 Canvas 纹理与几何体工具
-    ├── world.js        # 收藏底座、街道铺装、斑马线、停车位与积水倒影
-    ├── store.js        # 便利店外壳、招牌雨棚与全套室内暖光货架陈设
-    ├── buildings.js    # 1F→2F→3F 模块化邻栋公寓、后方建筑与居酒屋小巷
-    ├── street.js       # 贩卖机、自行车、电线杆、悬链电线、路灯、路牌与植物
-    ├── intro.js        # 6 阶段从下往上零穿模组装动画控制器
-    ├── fx.js           # 多层雨丝、屋檐水滴、地面雾气、闪电与多天气系统
-    ├── audio.js        # 纯 Web Audio API 程序化音效合成器
-    └── post.js         # 全屏法线/深度漫画描边、Bloom 辉光与移轴景深后处理
 ```
