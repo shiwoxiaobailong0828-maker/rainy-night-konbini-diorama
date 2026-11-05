@@ -17,12 +17,21 @@ function ensureCtx() {
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return null;
   ctx = new AC();
+  // 使用动态压缩器提升整体响度并防止峰值削波，让雨声、配乐、门铃与雷声饱满清晰
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -20;
+  comp.knee.value = 18;
+  comp.ratio.value = 3.5;
+  comp.attack.value = 0.005;
+  comp.release.value = 0.18;
+
   master = ctx.createGain();
-  master.gain.value = 0.75;
-  master.connect(ctx.destination);
+  master.gain.value = 1.85;
+  master.connect(comp);
+  comp.connect(ctx.destination);
   if (ctx.createMediaStreamDestination) {
     streamDest = ctx.createMediaStreamDestination();
-    master.connect(streamDest);
+    comp.connect(streamDest);
   }
   setupRainLoop();
   return ctx;
@@ -69,10 +78,10 @@ export function playPromoBgm(duration = 25) {
       lp.frequency.setValueAtTime(900, start);
       lp.frequency.exponentialRampToValueAtTime(380, start + chordDur * 0.95);
 
-      const peak = idx === 0 ? 0.042 : 0.024;
+      const peak = idx === 0 ? 0.14 : 0.085;
       g.gain.setValueAtTime(0.0001, start + idx * 0.045);
       g.gain.linearRampToValueAtTime(peak, start + idx * 0.045 + 0.08);
-      g.gain.exponentialRampToValueAtTime(0.001, start + chordDur * 0.98);
+      g.gain.exponentialRampToValueAtTime(0.002, start + chordDur * 0.98);
 
       osc.connect(lp);
       lp.connect(g);
@@ -83,21 +92,21 @@ export function playPromoBgm(duration = 25) {
     });
 
     // 轻柔的高音星光点缀音（Rhodes 泛音感）
-    const bellNotes = [chord[4] * 2, chord[3] * 2, chord[2] * 2];
+    const bellNotes = [chord[4] * 2, chord[3] * 2, chord[2] * 2, chord[1] * 2];
     bellNotes.forEach((bf, bi) => {
-      const bt = start + 0.85 + bi * 0.72;
+      const bt = start + 0.55 + bi * 0.62;
       if (bt - t0 >= duration - 0.5) return;
       const bOsc = c.createOscillator();
       const bGain = c.createGain();
       bOsc.type = 'sine';
       bOsc.frequency.setValueAtTime(bf, bt);
       bGain.gain.setValueAtTime(0.0001, bt);
-      bGain.gain.linearRampToValueAtTime(0.012, bt + 0.02);
-      bGain.gain.exponentialRampToValueAtTime(0.0001, bt + 0.9);
+      bGain.gain.linearRampToValueAtTime(0.048, bt + 0.02);
+      bGain.gain.exponentialRampToValueAtTime(0.0001, bt + 0.95);
       bOsc.connect(bGain);
       bGain.connect(master);
       bOsc.start(bt);
-      bOsc.stop(bt + 0.95);
+      bOsc.stop(bt + 1.0);
       bgmNodes.push(bOsc);
     });
   }
@@ -163,7 +172,7 @@ export function toggleMute() {
   ensureCtx();
   muted = !muted;
   if (master && ctx) {
-    master.gain.setTargetAtTime(muted ? 0.0001 : 0.75, ctx.currentTime, 0.08);
+    master.gain.setTargetAtTime(muted ? 0.0001 : 1.85, ctx.currentTime, 0.08);
   }
   return muted;
 }
@@ -187,7 +196,7 @@ export function playBuildTick(heightNorm = 0.5, kind = 'block') {
   osc.frequency.exponentialRampToValueAtTime(base * 0.9, t + 0.065);
 
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.linearRampToValueAtTime(kind === 'base' ? 0.14 : 0.085, t + 0.006);
+  g.gain.linearRampToValueAtTime(kind === 'base' ? 0.24 : 0.15, t + 0.006);
   g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
 
   osc.connect(g);
@@ -209,7 +218,7 @@ export function playPowerOn() {
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq, t + i * 0.055);
     g.gain.setValueAtTime(0.0001, t + i * 0.055);
-    g.gain.linearRampToValueAtTime(0.045, t + i * 0.055 + 0.02);
+    g.gain.linearRampToValueAtTime(0.095, t + i * 0.055 + 0.02);
     g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.055 + 0.55);
     osc.connect(g);
     g.connect(master);
@@ -239,7 +248,7 @@ export function playKonbiniChime() {
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq, t + delay);
     g.gain.setValueAtTime(0.0001, t + delay);
-    g.gain.linearRampToValueAtTime(0.028, t + delay + 0.015);
+    g.gain.linearRampToValueAtTime(0.085, t + delay + 0.015);
     g.gain.exponentialRampToValueAtTime(0.0001, t + delay + dur);
     osc.connect(g);
     g.connect(master);
